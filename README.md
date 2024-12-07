@@ -21,7 +21,7 @@
 
 1. 克隆仓库：
 bash
-git clone https://github.com/你的用户名/arithmetic-practice.git
+git clone https://github.com/bluewindd/arithmetic-practice.git
 cd arithmetic-practice
 2. 创建并激活虚拟环境：
 bash
