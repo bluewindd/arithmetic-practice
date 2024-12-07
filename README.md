@@ -51,15 +51,15 @@ python suanshu.py
 
 ## 项目结构
 arithmetic-practice/
-├── static/
-│ └── css/
-│ └── style.css
-├── templates/
-│ └── index.html
-├── suanshu.py
-├── requirements.txt
-├── README.md
-└── .gitignore
+   ├── static/
+   │ └── css/
+   │ └── style.css
+   ├── templates/
+   │ └── index.html
+   ├── suanshu.py
+   ├── requirements.txt
+   ├── README.md
+   └── .gitignore
 ## 开发计划
 
 - [ ] 添加用户系统
