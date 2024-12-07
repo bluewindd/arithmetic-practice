@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>✨ 算术练习软件 ✨</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 使用Google Fonts获取更友好的字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <!-- 使用Font Awesome获取图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 算术练习软件 ✨</h1>
+        <div class="settings">
+            <label>题目数量:
+                <input type="number" id="num_questions" value="10" min="1" max="50">
+            </label>
+            <label>数字个数:
+                <input type="number" id="num_count" value="2" min="2" max="5">
+            </label>
+            <label>数字范围:
+                <input type="number" id="num_range" value="10" min="1" max="100">
+            </label>
+            <label>结果最小值:
+                <input type="number" id="result_min" value="0">
+            </label>
+            <label>结果最大值:
+                <input type="number" id="result_max" value="100">
+            </label>
+            <label>运算符:
+                <div class="operators">
+                    <label><input type="checkbox" value="+"> +</label>
+                    <label><input type="checkbox" value="-"> -</label>
+                    <label><input type="checkbox" value="*"> ×</label>
+                    <label><input type="checkbox" value="/"> ÷</label>
+                </div>
+            </label>
+            <div class="button-group">
+                <button onclick="generateQuestions()" class="generate-button">🔍 生成题目</button>
+                <button onclick="showWrongQuestions()" class="wrong-button">📚 查看错题集</button>
+                <div class="multiplication-table-icon" onclick="showMultiplicationTable()">
+                    <i class="fas fa-table"></i>
+                    乘法口诀
+                </div>
+            </div>
+        </div>
+        <form id="quiz_form" onsubmit="submitAnswers(event)">
+            <div id="questions"></div>
+            <button type="submit" class="submit-button">✅ 提交答案</button>
+        </form>
+        <div id="results"></div>
+        <div id="score_display" class="score hidden">
+            <h2>🎯 您的得分: <span id="score"></span> 分</h2>
+            <div id="congrats" class="congrats hidden">
+                <i class="fas fa-trophy fa-3x"></i>
+                <p>🎉 恭喜您全部答对！</p>
+            </div>
+        </div>
+        <div id="wrong_questions_section" class="hidden">
+            <h2>❌ 错题集</h2>
+            <div id="wrong_questions"></div>
+            <button type="button" onclick="retryWrongQuestions()" class="retry-button">🔁 重新练习错题</button>
+        </div>
+        <div id="multiplicationTableModal" class="modal">
+            <div class="modal-content multiplication-table-content">
+                <span class="close-button" onclick="closeMultiplicationTable()">&times;</span>
+                <h2>📝 九九乘法口诀表</h2>
+                <div class="multiplication-table"></div>
+                <button class="practice-button" onclick="startMultiplicationPractice()">
+                    开始练习
+                </button>
+            </div>
+        </div>
+        <div id="multiplicationPracticeModal" class="modal">
+            <div class="modal-content practice-content">
+                <span class="close-button" onclick="closePracticeModal()">&times;</span>
+                <h2>🎯 乘法口诀练习</h2>
+                <div class="practice-area">
+                    <div id="practiceQuestion"></div>
+                    <input type="number" id="practiceAnswer" placeholder="请输入答案">
+                    <button onclick="checkPracticeAnswer()">提交</button>
+                </div>
+                <div class="practice-stats">
+                    <span>正确: <span id="correctCount">0</span></span>
+                    <span>错误: <span id="wrongCount">0</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 生成题目函数
+        function generateQuestions() {
+            const num_questions = parseInt(document.getElementById('num_questions').value);
+            const num_count = parseInt(document.getElementById('num_count').value);
+            const num_range = parseInt(document.getElementById('num_range').value);
+            const result_min = parseInt(document.getElementById('result_min').value);
+            const result_max = parseInt(document.getElementById('result_max').value);
+            const operators = Array.from(document.querySelectorAll('.operators input:checked')).map(opt => opt.value);
+            if (operators.length === 0){
+                alert('请选择至少一个运算！');
+                return;
+            }
+            fetch('/generate_questions', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    num_questions: num_questions,
+                    num_count: num_count,
+                    num_range: num_range,
+                    result_range: {min: result_min, max: result_max},
+                    operators: operators
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const questionsDiv = document.getElementById('questions');
+                questionsDiv.innerHTML = '';
+                data.questions.forEach((q, index) => {
+                    const qDiv = document.createElement('div');
+                    qDiv.classList.add('question');
+                    // 使用encodeURIComponent确保solution内容不会破坏HTML
+                    const encodedSolution = encodeURIComponent(q.solution);
+                    qDiv.innerHTML = `
+                        <div class="question-header">
+                            <span class="question-number">题目 ${index + 1}:</span>
+                        </div>
+                        <div class="question-body">
+                            <p>${q.question} = 
+                                <input type="number" name="answer_${index}" required>
+                                <input type="hidden" name="correct_${index}" value="${q.answer}">
+                                <input type="hidden" name="solution_${index}" value="${encodedSolution}">
+                            </p>
+                        </div>
+                    `;
+                    questionsDiv.appendChild(qDiv);
+                });
+                // 重置结果和错题集
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('score_display').classList.add('hidden');
+                document.getElementById('congrats').classList.add('hidden');
+                document.getElementById('wrong_questions_section').classList.add('hidden');
+                document.getElementById('wrong_questions').innerHTML = '';
+            });
+        }
+
+        // 提交答案函数
+        function submitAnswers(event){
+            event.preventDefault();
+            const form = document.getElementById('quiz_form');
+            const formData = new FormData(form);
+            const submitted = [];
+            const correct = [];
+            const detailed_solutions = [];
+            const questions = [];
+            for(let pair of formData.entries()){
+                if(pair[0].startsWith('answer_')){
+                    submitted.push(Number(pair[1]));
+                }
+                if(pair[0].startsWith('correct_')){
+                    correct.push(Number(pair[1]));
+                }
+                if(pair[0].startsWith('solution_')){
+                    detailed_solutions.push(decodeURIComponent(pair[1]));
+                }
+            }
+            // 获取题目文本
+            const questionElements = document.querySelectorAll('.question-body p');
+            questionElements.forEach((elem, index) => {
+                const questionText = elem.textContent.split('=')[0].trim();
+                questions.push(questionText);
+            });
+            fetch('/submit_answers', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    submitted: submitted,
+                    correct: correct,
+                    questions: questions,
+                    detailed_solutions: detailed_solutions
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                const scoreDisplay = document.getElementById('score_display');
+                const scoreElement = document.getElementById('score');
+                const congrats = document.getElementById('congrats');
+                
+                resultsDiv.innerHTML = '';
+                data.results.forEach((res, index) => {
+                    const resDiv = document.createElement('div');
+                    resDiv.classList.add('result');
+                    
+                    // 创建错误详情按钮
+                    let errorButton = '';
+                    if (!res.is_correct) {
+                        const encodedSolution = btoa(encodeURIComponent(res.solution)); // 用 base64 编码
+                        errorButton = `<button class='error-detail-button' onclick="showSolutionDetails('${encodedSolution}')">查看解题步骤</button>`;
+                    }
+                    
+                    // 使用 createElement 和 textContent 来避免 HTML 注入问题
+                    const resultPara = document.createElement('p');
+                    resultPara.innerHTML = `
+                        题目 ${index + 1}:
+                        您的答案 
+                        <span class="${res.is_correct ? 'correct' : 'incorrect'}">${res.your_answer}</span> 
+                        ${res.is_correct ? 
+                            '✅ 正确' : 
+                            `❌ 错误（正确答案：${res.correct_answer}） ${errorButton}`
+                        }
+                    `;
+                    
+                    resDiv.appendChild(resultPara);
+                    resultsDiv.appendChild(resDiv);
+                });
+
+                // 显示分数
+                scoreElement.textContent = data.score;
+                scoreDisplay.classList.remove('hidden');
+                
+                // 只有在全部答对且得分为100时才显示庆祝
+                if (data.all_correct && data.score === 100) {
+                    congrats.classList.remove('hidden');
+                } else {
+                    congrats.classList.add('hidden');
+                }
+            });
+        }
+
+        // 显示解题思路函数
+        function showSolutionDetails(encodedSolution) {
+            try {
+                // 使用 base64 解码，然后再 URL 解码
+                const solution = decodeURIComponent(atob(encodedSolution));
+                
+                // 移除旧的模态框
+                const oldModal = document.querySelector('.modal');
+                if (oldModal) {
+                    oldModal.remove();
+                }
+
+                // 创建模态框元素
+                const modalDiv = document.createElement('div');
+                modalDiv.className = 'modal';
+                
+                // 创建模态框内容
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'modal-content';
+                
+                // 创建关闭按钮
+                const closeButton = document.createElement('span');
+                closeButton.className = 'close-button';
+                closeButton.innerHTML = '&times;';
+                closeButton.onclick = function() { closeModal(this); };
+                
+                // 创建标题
+                const title = document.createElement('h2');
+                title.textContent = '📖 解题步骤';
+                
+                // 创建解题思路容器
+                const solutionDiv = document.createElement('div');
+                solutionDiv.className = 'solution-content';
+                solutionDiv.innerHTML = solution;
+                
+                // 组装模态框
+                contentDiv.appendChild(closeButton);
+                contentDiv.appendChild(title);
+                contentDiv.appendChild(solutionDiv);
+                modalDiv.appendChild(contentDiv);
+                
+                // 添加到页面
+                document.body.appendChild(modalDiv);
+                
+                // 显示模态框
+                requestAnimationFrame(() => {
+                    modalDiv.classList.add('show');
+                });
+                
+                // 点击外部关闭
+                modalDiv.addEventListener('click', (e) => {
+                    if (e.target === modalDiv) {
+                        closeModal(modalDiv.querySelector('.close-button'));
+                    }
+                });
+            } catch (error) {
+                console.error('Error showing solution:', error);
+                alert('显示解题思路时出错，请重试。');
+            }
+        }
+
+        // 关闭模态框函数
+        function closeModal(element) {
+            const modal = element.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    // 重置所有输入和状态
+                    if (modal.id === 'multiplicationPracticeModal') {
+                        practiceStats = {
+                            correct: 0,
+                            wrong: 0,
+                            currentQuestion: null
+                        };
+                        document.getElementById('correctCount').textContent = '0';
+                        document.getElementById('wrongCount').textContent = '0';
+                        document.getElementById('practiceAnswer').value = '';
+                    }
+                }, 300);
+            }
+        }
+
+        // 显示错题集函数
+        function showWrongQuestions(){
+            fetch('/get_wrong_questions')
+            .then(response => response.json())
+            .then(data => {
+                const wrongSection = document.getElementById('wrong_questions_section');
+                const wrongDiv = document.getElementById('wrong_questions');
+                wrongDiv.innerHTML = '';
+                if(data.wrong_questions.length >0){
+                    // 添加排序项
+                    const sortDiv = document.createElement('div');
+                    sortDiv.classList.add('sort-options');
+                    sortDiv.innerHTML = `
+                        <label>排序方式:
+                            <select id="sort_order">
+                                <option value="recent">由近</option>
+                                <option value="random">随机排序</option>
+                            </select>
+                        </label>
+                        <button type="button" onclick="sortWrongQuestions()" class="sort-button">🔄 排</button>
+                    `;
+                    wrongDiv.appendChild(sortDiv);
+
+                    data.wrong_questions.forEach((q, index) => {
+                        const qDiv = document.createElement('div');
+                        qDiv.classList.add('wrong_question');
+                        qDiv.innerHTML = `
+                            <p><strong>题目 ${index +1}:</strong> ${q.question}</p>
+                            <p><em>时间:</em> ${q.timestamp}</p>
+                        `;
+                        wrongDiv.appendChild(qDiv);
+                    });
+                    wrongSection.classList.remove('hidden');
+                } else{
+                    wrongDiv.innerHTML = '<p>当前没有错题。</p>';
+                    wrongSection.classList.remove('hidden');
+                }
+            });
+        }
+
+        // 重新练习错题函数
+        function retryWrongQuestions(){
+            fetch('/get_wrong_questions?sort_order=random')  // 随机排序重新加载错题
+            .then(response => response.json())
+            .then(data => {
+                const questions = data.wrong_questions;
+                if(questions.length ===0){
+                    alert('当前没有错题可练习。');
+                    return;
+                }
+                const questionsDiv = document.getElementById('questions');
+                questionsDiv.innerHTML = '';
+                questions.forEach((q, index) => {
+                    const qDiv = document.createElement('div');
+                    qDiv.classList.add('question');
+                    const encodedSolution = encodeURIComponent(q.solution);
+                    qDiv.innerHTML = `
+                        <div class="question-header">
+                            <span class="question-number">错题 ${index +1}:</span>
+                        </div>
+                        <div class="question-body">
+                            <p>${q.question} = 
+                                <input type="number" name="answer_${index}" required>
+                                <input type="hidden" name="correct_${index}" value="${eval(q.question)}">
+                                <input type="hidden" name="solution_${index}" value="${encodedSolution}">
+                            </p>
+                        </div>
+                    `;
+                    questionsDiv.appendChild(qDiv);
+                });
+                // 隐藏错题集
+                document.getElementById('wrong_questions_section').classList.add('hidden');
+                // 重置结果和数显示
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('score_display').classList.add('hidden');
+                document.getElementById('congrats').classList.add('hidden');
+            });
+        }
+
+        // ���序错题集函数
+        function sortWrongQuestions(){
+            const sortOrder = document.getElementById('sort_order').value;
+            fetch(`/get_wrong_questions?sort_order=${sortOrder}`)
+            .then(response => response.json())
+            .then(data => {
+                const wrongDiv = document.getElementById('wrong_questions');
+                wrongDiv.innerHTML = '';
+                if(data.wrong_questions.length >0){
+                    data.wrong_questions.forEach((q, index) => {
+                        const qDiv = document.createElement('div');
+                        qDiv.classList.add('wrong_question');
+                        qDiv.innerHTML = `
+                            <p><strong>题目 ${index +1}:</strong> ${q.question}</p>
+                            <p><em>时间:</em> ${q.timestamp}</p>
+                        `;
+                        wrongDiv.appendChild(qDiv);
+                    });
+                } else{
+                    wrongDiv.innerHTML = '<p>当前没有错题。</p>';
+                }
+            });
+        }
+
+        // 确保页面加载时隐藏庆祝信息
+        window.onload = function() {
+            document.getElementById('score_display').classList.add('hidden');
+            document.getElementById('congrats').classList.add('hidden');
+            document.getElementById('wrong_questions_section').classList.add('hidden');
+        };
+
+        // 显示乘法口诀表
+        function showMultiplicationTable() {
+            const modal = document.getElementById('multiplicationTableModal');
+            const table = document.querySelector('.multiplication-table');
+            table.innerHTML = '';
+            
+            // 生成完整的乘法口诀表
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 1; j <= 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'multiplication-cell';
+                    // 只显示下三角部分
+                    if (j <= i) {
+                        cell.textContent = `${j}×${i}=${i*j}`;
+                        cell.onclick = () => startPracticeWithNumbers(j, i);
+                        cell.style.backgroundColor = '#fff';  // 有内容的单元格保持白色背景
+                    } else {
+                        cell.style.backgroundColor = 'transparent';  // 空白单元格设为透明
+                        cell.style.boxShadow = 'none';
+                        cell.style.cursor = 'default';
+                    }
+                    table.appendChild(cell);
+                }
+            }
+            
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+        }
+
+        // 关闭乘法口诀表
+        function closeMultiplicationTable() {
+            const modal = document.getElementById('multiplicationTableModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // 乘法练习相关变量
+        let practiceStats = {
+            correct: 0,
+            wrong: 0,
+            currentQuestion: null
+        };
+
+        // 开始乘法练习
+        function startMultiplicationPractice() {
+            const multiplicationModal = document.getElementById('multiplicationTableModal');
+            const practiceModal = document.getElementById('multiplicationPracticeModal');
+            
+            // 重置练习统计
+            practiceStats = {
+                correct: 0,
+                wrong: 0,
+                currentQuestion: null
+            };
+            
+            // ��新显示
+            document.getElementById('correctCount').textContent = '0';
+            document.getElementById('wrongCount').textContent = '0';
+            
+            // 隐藏乘法表模态框
+            multiplicationModal.classList.remove('show');
+            setTimeout(() => {
+                multiplicationModal.style.display = 'none';
+                // 显示练习模态框
+                practiceModal.style.display = 'block';
+                setTimeout(() => {
+                    practiceModal.classList.add('show');
+                    // 生成第一个问题
+                    generatePracticeQuestion();
+                    // 聚焦到输入框
+                    document.getElementById('practiceAnswer').focus();
+                }, 10);
+            }, 300);
+        }
+
+        // 关闭练习模态框
+        function closePracticeModal() {
+            const modal = document.getElementById('multiplicationPracticeModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                // 重置练习状态
+                practiceStats = {
+                    correct: 0,
+                    wrong: 0,
+                    currentQuestion: null
+                };
+                document.getElementById('correctCount').textContent = '0';
+                document.getElementById('wrongCount').textContent = '0';
+                document.getElementById('practiceAnswer').value = '';
+            }, 300);
+        }
+
+        // 生成练习题
+        function generatePracticeQuestion() {
+            const num1 = Math.floor(Math.random() * 9) + 1;
+            const num2 = Math.floor(Math.random() * 9) + 1;
+            practiceStats.currentQuestion = {
+                num1: num1,
+                num2: num2,
+                answer: num1 * num2
+            };
+            
+            const questionElement = document.getElementById('practiceQuestion');
+            questionElement.innerHTML = `${num1} × ${num2} = ?`;
+            
+            // 清空并聚焦输入框
+            const answerInput = document.getElementById('practiceAnswer');
+            answerInput.value = '';
+            answerInput.focus();
+        }
+
+        // 检查练习答案
+        function checkPracticeAnswer() {
+            const answerInput = document.getElementById('practiceAnswer');
+            const userAnswer = parseInt(answerInput.value);
+            
+            if (isNaN(userAnswer)) {
+                alert('请输入有效的数字！');
+                return;
+            }
+            
+            if (userAnswer === practiceStats.currentQuestion.answer) {
+                practiceStats.correct++;
+                // 使用更友好的提示
+                const modal = document.createElement('div');
+                modal.className = 'success-message';
+                modal.textContent = '答对了！👍';
+                document.body.appendChild(modal);
+                setTimeout(() => modal.remove(), 1500);
+            } else {
+                practiceStats.wrong++;
+                alert(`答错了！正确答案是：${practiceStats.currentQuestion.answer}`);
+            }
+            
+            document.getElementById('correctCount').textContent = practiceStats.correct;
+            document.getElementById('wrongCount').textContent = practiceStats.wrong;
+            
+            // 清空输入框并聚焦
+            answerInput.value = '';
+            answerInput.focus();
+            
+            generatePracticeQuestion();
+        }
+
+        // 从口诀表中选择特定数字开始练习
+        function startPracticeWithNumbers(num1, num2) {
+            const multiplicationModal = document.getElementById('multiplicationTableModal');
+            const practiceModal = document.getElementById('multiplicationPracticeModal');
+            
+            // 重置练习统计
+            practiceStats = {
+                correct: 0,
+                wrong: 0,
+                currentQuestion: null
+            };
+            
+            // 更新显示
+            document.getElementById('correctCount').textContent = '0';
+            document.getElementById('wrongCount').textContent = '0';
+            
+            // 隐藏乘法表模态框
+            multiplicationModal.classList.remove('show');
+            setTimeout(() => {
+                multiplicationModal.style.display = 'none';
+                // 显示练习模态框
+                practiceModal.style.display = 'block';
+                setTimeout(() => {
+                    practiceModal.classList.add('show');
+                    // 设置当前问题
+                    practiceStats.currentQuestion = {
+                        num1: num1,
+                        num2: num2,
+                        answer: num1 * num2
+                    };
+                    // 显示问题
+                    document.getElementById('practiceQuestion').innerHTML = `${num1} × ${num2} = ?`;
+                    // 清空并聚焦输入框
+                    const answerInput = document.getElementById('practiceAnswer');
+                    answerInput.value = '';
+                    answerInput.focus();
+                }, 10);
+            }, 300);
+        }
+
+        // 添加回车键提交答案
+        document.getElementById('practiceAnswer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPracticeAnswer();
+            }
+        });
+
+        // 添加键盘事件监听
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // 查找当前显示的模态框
+                const visibleModal = document.querySelector('.modal[style*="display: block"]');
+                if (visibleModal) {
+                    const closeButton = visibleModal.querySelector('.close-button');
+                    if (closeButton) {
+                        closeButton.click();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

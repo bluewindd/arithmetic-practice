@@ -1,0 +1,731 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #FFFAE5;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    background-color: #FFFFFF;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    border: 2px solid #FFD700;
+}
+
+h1 {
+    text-align: center;
+    color: #FF4500;
+    margin-bottom: 20px;
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.settings {
+    background-color: #FFF0F5;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #FFB6C1;
+}
+
+.settings label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333333;
+}
+
+.settings label input[type="number"] {
+    width: 60px;
+    margin-left: 10px;
+    padding: 5px;
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.settings .operators {
+    display: flex;
+    justify-content: space-between;
+    width: 220px;
+}
+
+.settings .operators label {
+    font-size: 18px;
+    color: #333333;
+}
+
+button.generate-button, button.wrong-button, button.submit-button, button.retry-button, button.sort-button {
+    padding: 10px 15px;
+    background-color: #1E90FF;
+    border: none;
+    color: #FFFFFF;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-right: 10px;
+}
+
+button.generate-button:hover, button.wrong-button:hover, button.submit-button:hover, button.retry-button:hover, button.sort-button:hover {
+    background-color: #63B3ED;
+    transform: scale(1.05);
+}
+
+button.submit-button {
+    background-color: #32CD32;
+}
+
+button.submit-button:hover {
+    background-color: #3CB371;
+}
+
+button.retry-button {
+    background-color: #FFA500;
+}
+
+button.retry-button:hover {
+    background-color: #FF8C00;
+}
+
+button.sort-button {
+    background-color: #6A5ACD;
+}
+
+button.sort-button:hover {
+    background-color: #836FFF;
+}
+
+.question {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-sizing: border-box;
+    background-color: #F0FFF0;
+    border-radius: 8px;
+    border: 1px solid #98FB98;
+}
+
+.question-header {
+    margin-bottom: 10px;
+}
+
+.question-number {
+    font-size: 20px;
+    color: #333333;
+    font-weight: bold;
+}
+
+.question-body p {
+    font-size: 20px;
+    color: #333333;
+    display: flex;
+    align-items: center;
+}
+
+.question-body input[type="number"] {
+    width: 80px;
+    margin-left: 10px;
+    padding: 5px;
+    border: 2px solid #1E90FF;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+.result {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.result p {
+    font-size: 18px;
+    color: #333333;
+}
+
+.correct {
+    color: #32CD32;
+    font-weight: bold;
+}
+
+.incorrect {
+    color: #FF6347;
+    font-weight: bold;
+}
+
+.result button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: #FF6347;
+    border: none;
+    color: #FFFFFF;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.result button:hover {
+    background-color: #E5533D;
+    transform: scale(1.05);
+}
+
+.congrats {
+    text-align: center;
+    color: #FFD700;
+    animation: tada 1s;
+}
+
+@keyframes tada {
+    from { transform: scale(1); }
+    25% { transform: scale(1.1) rotate(3deg); }
+    50% { transform: scale(1.1) rotate(-3deg); }
+    75% { transform: scale(1.1) rotate(2deg); }
+    to { transform: scale(1) rotate(0); }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    transform: scale(0.7);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+/* 关闭按钮样式 */
+.close-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.close-button:hover {
+    color: #000;
+}
+
+#wrong_questions_section {
+    background-color: #FFE6E6;
+    padding: 20px;
+    border-radius:10px;
+    margin-top:25px;
+    border: 1px solid #FFCCCC;
+}
+
+.wrong_question {
+    margin-bottom:15px;
+    padding: 15px;
+    background-color: #FFF0F0;
+    border-left:5px solid #FF6347;
+    border-radius:5px;
+}
+
+.wrong_question p {
+    font-size: 18px;
+    color: #333333;
+}
+
+.sort-options {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.sort-options label {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.sort-options select {
+    padding: 5px;
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+@keyframes celebrate {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.congrats {
+    animation: celebrate 1s infinite;
+}
+
+/* 添加解题思路样式 */
+.solution-content {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.step {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #fff;
+    border-left: 4px solid #4CAF50;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.step:hover {
+    background-color: #e6f7ff;
+    transition: background-color 0.3s ease;
+}
+
+/* 隐藏类 */
+.hidden {
+    display: none;
+}
+
+/* 确保 .congrats 类初始为隐藏 */
+.congrats.hidden {
+    display: none;
+}
+
+/* 优化移动端响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 15px;
+        margin: 10px auto;
+    }
+    
+    h1 {
+        font-size: 28px;
+    }
+    
+    .settings label {
+        font-size: 16px;
+    }
+    
+    .settings .operators {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .settings .operators label {
+        width: 45%;
+        margin-bottom: 10px;
+    }
+    
+    button.generate-button, 
+    button.wrong-button, 
+    button.submit-button, 
+    button.retry-button, 
+    button.sort-button {
+        width: 48%;
+        margin-bottom: 10px;
+    }
+    
+    .step {
+        font-size: 16px;
+    }
+    
+    .solution-content {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .settings label {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .settings input, .settings select {
+        margin-left: 0;
+        margin-top: 5px;
+        width: 100%;
+    }
+
+    .settings .operators {
+        justify-content: space-around;
+    }
+
+    .sort-options {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sort-options label, .sort-options select {
+        width: 100%;
+    }
+
+    .sort-options button.sort-button {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    button.generate-button, 
+    button.wrong-button, 
+    button.submit-button, 
+    button.retry-button, 
+    button.sort-button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .step img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* 增加触摸友好的按钮大小 */
+    button {
+        padding: 12px 20px;
+    }
+
+    /* 调整输入框大小 */
+    .question-body input[type="number"] {
+        width: 80px;
+        padding: 8px;
+        font-size: 18px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .solution-content {
+        font-size: 14px;
+    }
+    
+    .step {
+        padding: 10px;
+        margin: 10px 0;
+    }
+}
+
+/* 添加正确答案样式 */
+.correct-answer {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    border-radius: 4px;
+}
+
+.correct-answer h3 {
+    margin: 0;
+    color: #2e7d32;
+}
+
+/* 优化按钮布局 */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+/* 确保所有内容都在可视区域内 */
+body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* 优化结果显示 */
+.result {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* 确保emoji和文字正确显示 */
+.step br {
+    margin: 8px 0;
+}
+
+.step strong {
+    color: #1a73e8;
+    margin-right: 8px;
+}
+
+.step .apples {
+    margin: 10px 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.apples {
+    margin: 10px 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+    line-height: 1.5;
+}
+
+.step strong {
+    color: #1a73e8;
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.step br {
+    display: block;
+    margin: 8px 0;
+    content: "";
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .solution-content {
+        padding: 8px;
+    }
+    
+    .step {
+        padding: 10px;
+        margin: 8px 0;
+        font-size: 14px;
+    }
+}
+
+/* 修改乘法口诀图标样式 */
+.multiplication-table-icon {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.multiplication-table-icon i {
+    margin-right: 5px;
+}
+
+/* 修改乘法口诀表样式 */
+.multiplication-table {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);  /* 固定9列 */
+    gap: 5px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.multiplication-cell {
+    aspect-ratio: 1;  /* 保持单元格为正方形 */
+    padding: 5px;
+    text-align: center;
+    background-color: white;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.multiplication-cell:hover {
+    background-color: #e3f2fd;
+    transform: scale(1.05);
+}
+
+/* 乘法口诀表样式 */
+.multiplication-table-content {
+    width: 95% !important;
+    max-width: 1000px !important;  /* 增加最大宽度 */
+    margin: 20px auto;
+    height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* 练习模式样式优化 */
+.practice-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.practice-area {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+#practiceQuestion {
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.practice-area input {
+    width: 120px;
+    padding: 12px;
+    font-size: 24px;
+    text-align: center;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    outline: none;
+}
+
+.practice-area input:focus {
+    border-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.practice-area button {
+    padding: 12px 25px;
+    font-size: 18px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.practice-area button:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+.practice-stats {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    font-size: 18px;
+}
+
+.practice-stats span {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .practice-content {
+        padding: 15px;
+    }
+
+    #practiceQuestion {
+        font-size: 28px;
+    }
+
+    .practice-area input {
+        width: 100px;
+        padding: 10px;
+        font-size: 20px;
+    }
+
+    .practice-stats {
+        font-size: 16px;
+        gap: 15px;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .multiplication-table {
+        gap: 3px;
+        padding: 10px;
+    }
+
+    .multiplication-cell {
+        font-size: 12px;
+        padding: 3px;
+    }
+
+    /* 横屏模式下的样式 */
+    @media (orientation: landscape) {
+        .multiplication-table-content {
+            width: 95% !important;
+            max-width: none;
+            margin: 10px;
+        }
+
+        .multiplication-table {
+            grid-template-columns: repeat(9, 1fr);
+        }
+    }
+
+    /* 竖屏模式下的样式 */
+    @media (orientation: portrait) {
+        .multiplication-table-content {
+            width: 98% !important;
+            margin: 5px;
+        }
+
+        .multiplication-table {
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            padding: 5px;
+        }
+
+        .multiplication-cell {
+            font-size: 10px;
+            padding: 2px;
+        }
+    }
+}

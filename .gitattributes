@@ -1,0 +1,13 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python files
+*.py text diff=python
+
+# Web files
+*.html text diff=html
+*.css text diff=css
+*.js text
+
+# Documents
+*.md text diff=markdown 
